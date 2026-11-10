@@ -1,0 +1,587 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Big O Showdown</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one centered "race card" — code on top, six runtime lanes below, reveal shows real-world time at n = 1,000,000 */
+:root {
+  --bg: #eef1f5; --surface: #ffffff; --ink: #18202c; --muted: #5b6676; --line: #d5dbe4;
+  --accent: #e2591c; --accent-ink: #ffffff; --code-bg: #f6f8fb;
+  --good: #1f8a4c; --good-bg: #e3f4ea; --bad: #c0362c; --bad-bg: #fbe7e5;
+  --kw: #7b3fc4; --num: #b25a00; --cm: #7c8695;
+  --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --body: "Inter", system-ui, -apple-system, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #12161d; --surface: #1b212b; --ink: #e8ecf2; --muted: #9aa5b5; --line: #2c3442;
+  --accent: #ff7a3d; --accent-ink: #1a0d05; --code-bg: #151a22;
+  --good: #4fd187; --good-bg: #173226; --bad: #ff7b70; --bad-bg: #3a1d1b;
+  --kw: #c79bff; --num: #ffb362; --cm: #7d8899; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #12161d; --surface: #1b212b; --ink: #e8ecf2; --muted: #9aa5b5; --line: #2c3442;
+  --accent: #ff7a3d; --accent-ink: #1a0d05; --code-bg: #151a22;
+  --good: #4fd187; --good-bg: #173226; --bad: #ff7b70; --bad-bg: #3a1d1b;
+  --kw: #c79bff; --num: #ffb362; --cm: #7d8899; color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 48px; }
+.wrap { max-width: 760px; margin: 0 auto; display: grid; gap: 18px; }
+header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px; }
+h1 { font-family: var(--display); font-size: clamp(28px, 6vw, 40px); margin: 0; letter-spacing: -0.02em; line-height: 1; }
+h1 span { color: var(--accent); }
+.sub { color: var(--muted); margin: 6px 0 0; }
+.stats { display: flex; gap: 8px; font-variant-numeric: tabular-nums; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 6px 12px; text-align: center; min-width: 70px; }
+.stat b { display: block; font-family: var(--display); font-size: 20px; }
+.stat small { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 20px; display: grid; gap: 16px; }
+.qhead { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: baseline; }
+.qnum { font-size: 12px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); font-weight: 600; }
+.qtitle { font-family: var(--display); font-size: 20px; margin: 2px 0 0; text-wrap: balance; }
+.tag { font-size: 12px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; white-space: nowrap; }
+.timer { height: 4px; background: var(--line); border-radius: 4px; overflow: hidden; }
+.timer i { display: block; height: 100%; background: var(--accent); width: 100%; transition: width .2s linear; }
+pre { margin: 0; background: var(--code-bg); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; overflow-x: auto;
+  font-family: var(--mono); font-size: 14px; line-height: 1.6; }
+.kw { color: var(--kw); font-weight: 600; } .nm { color: var(--num); } .cm { color: var(--cm); font-style: italic; }
+
+.choices { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 520px) { .choices { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.choice { font-family: var(--mono); font-size: 17px; font-weight: 600; padding: 14px 8px; border-radius: 10px; cursor: pointer;
+  border: 2px solid var(--line); background: var(--surface); color: var(--ink); position: relative; transition: border-color .15s, transform .1s; }
+.choice:hover:not(:disabled) { border-color: var(--accent); transform: translateY(-1px); }
+.choice:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.choice kbd { position: absolute; top: 4px; left: 8px; font-family: var(--body); font-size: 10px; color: var(--muted); }
+.choice.right { border-color: var(--good); background: var(--good-bg); color: var(--good); }
+.choice.wrong { border-color: var(--bad); background: var(--bad-bg); color: var(--bad); }
+.choice:disabled { cursor: default; }
+
+.reveal { display: grid; gap: 12px; border-top: 1px dashed var(--line); padding-top: 16px; }
+.verdict { font-family: var(--display); font-size: 20px; margin: 0; }
+.verdict.ok { color: var(--good); } .verdict.no { color: var(--bad); }
+.why { margin: 0; max-width: 65ch; }
+.race h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
+.lane { display: grid; grid-template-columns: 82px minmax(0,1fr) 130px; gap: 10px; align-items: center; font-size: 13px; padding: 3px 0; }
+.lane code { font-family: var(--mono); font-weight: 600; }
+.lane .bar { height: 10px; background: var(--line); border-radius: 5px; overflow: hidden; }
+.lane .bar i { display: block; height: 100%; background: var(--muted); opacity: .45; border-radius: 5px; }
+.lane.hit .bar i { background: var(--good); opacity: 1; } .lane.miss .bar i { background: var(--bad); opacity: 1; }
+.lane.hit code { color: var(--good); } .lane.miss code { color: var(--bad); }
+.lane span { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+@media (max-width: 520px) { .lane { grid-template-columns: 70px minmax(0,1fr) 96px; font-size: 12px; } }
+
+.row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+.btn { font-family: var(--body); font-weight: 600; font-size: 15px; padding: 10px 18px; border-radius: 10px; cursor: pointer; border: 2px solid var(--accent); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); }
+.btn.ghost { background: transparent; color: var(--accent); }
+.btn:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+
+.start { text-align: left; }
+.start p { margin: 0; max-width: 65ch; }
+.modes { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
+@media (max-width: 520px) { .modes { grid-template-columns: 1fr; } }
+.mode { text-align: left; border: 2px solid var(--line); background: var(--code-bg); border-radius: 12px; padding: 14px; cursor: pointer; color: var(--ink); font-family: var(--body); }
+.mode:hover, .mode:focus-visible { border-color: var(--accent); outline: none; }
+.mode b { font-family: var(--display); font-size: 18px; display: block; }
+.mode small { color: var(--muted); }
+.ladder { display: flex; flex-wrap: wrap; gap: 6px; font-family: var(--mono); font-size: 13px; align-items: center; color: var(--muted); }
+.ladder code { color: var(--ink); background: var(--code-bg); border: 1px solid var(--line); border-radius: 6px; padding: 2px 8px; }
+
+.review { display: grid; gap: 8px; }
+.ritem { display: grid; grid-template-columns: 22px minmax(0,1fr) auto; gap: 10px; align-items: center; padding: 8px 10px; border-radius: 8px; background: var(--code-bg); font-size: 14px; }
+.ritem .mark { font-weight: 700; } .ritem.ok .mark { color: var(--good); } .ritem.no .mark { color: var(--bad); }
+.ritem code { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+.big { font-family: var(--display); font-size: 56px; line-height: 1; margin: 0; }
+.lens { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; color: var(--muted); font-size: 13px; }
+.len { font-family: var(--body); font-weight: 600; font-size: 13px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; font-variant-numeric: tabular-nums; }
+.len[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.len:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.foot { color: var(--muted); font-size: 12px; text-align: center; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Big <span>O</span> Showdown</h1>
+      <p class="sub">Read the Java. Name the runtime. See what it costs at a million items.</p>
+    </div>
+    <div class="stats" aria-live="polite">
+      <div class="stat"><b id="sScore">0</b><small>Points</small></div>
+      <div class="stat"><b id="sStreak">0</b><small>Streak</small></div>
+    </div>
+  </header>
+  <main id="app"></main>
+  <p class="foot">Keys 1–6 pick an answer · Enter goes to the next question</p>
+</div>
+
+<script>
+const OPTS = ["O(1)", "O(log n)", "O(n)", "O(n log n)", "O(n²)", "O(2ⁿ)"];
+// Steps at n = 1,000,000 on a machine doing 10^9 simple steps per second
+const RACE = [
+  { w: 2,   t: "1 ns" },
+  { w: 8,   t: "20 ns" },
+  { w: 30,  t: "1 ms" },
+  { w: 45,  t: "20 ms" },
+  { w: 78,  t: "≈ 17 minutes" },
+  { w: 100, t: "longer than the universe" }
+];
+
+const Q = [
+  { t: "Sum an array", a: 2, tag: "loops",
+    c: `int sum = 0;
+for (int i = 0; i < arr.length; i++) {
+    sum += arr[i];
+}`, why: "One loop, one visit per element. Double the array, double the work." },
+  { t: "Every pair", a: 4, tag: "loops",
+    c: `for (int i = 0; i < n; i++) {
+    for (int j = 0; j < n; j++) {
+        count++;
+    }
+}`, why: "The inner loop runs n times for each of the n outer passes: n × n." },
+  { t: "Halving", a: 1, tag: "loops",
+    c: `int steps = 0;
+while (n > 1) {
+    n = n / 2;
+    steps++;
+}`, why: "n is cut in half every pass. You can only halve a million about 20 times before hitting 1." },
+  { t: "Last element", a: 0, tag: "arrays",
+    c: `int last = arr[arr.length - 1];`,
+    why: "Array indexing jumps straight to a memory address. Size doesn't matter." },
+  { t: "Binary search", a: 1, tag: "searching",
+    c: `int lo = 0, hi = arr.length - 1;
+while (lo <= hi) {
+    int mid = (lo + hi) / 2;
+    if (arr[mid] == target) return mid;
+    if (arr[mid] < target) lo = mid + 1;
+    else hi = mid - 1;
+}
+return -1;`, why: "Each comparison throws away half of what's left. Same shape as the halving loop." },
+  { t: "Merge sort", a: 3, tag: "sorting",
+    c: `void mergeSort(int[] arr, int lo, int hi) {
+    if (lo >= hi) return;
+    int mid = (lo + hi) / 2;
+    mergeSort(arr, lo, mid);
+    mergeSort(arr, mid + 1, hi);
+    merge(arr, lo, mid, hi);   // O(n) work
+}`, why: "Splitting in half gives log n levels. Each level merges all n elements. log n levels × n work." },
+  { t: "Quick sort, average case", a: 3, tag: "sorting",
+    c: `void quickSort(int[] arr, int lo, int hi) {
+    if (lo >= hi) return;
+    int p = partition(arr, lo, hi);  // O(n) work
+    quickSort(arr, lo, p - 1);
+    quickSort(arr, p + 1, hi);
+}
+// random data: pivot lands near the middle`,
+    why: "A pivot near the middle splits like merge sort: about log n levels, n partition work per level." },
+  { t: "Quick sort, already sorted", a: 4, tag: "sorting",
+    c: `// Same quickSort, pivot = arr[lo]
+// Input: {1, 2, 3, 4, 5, ..., n}
+quickSort(arr, 0, arr.length - 1);`,
+    why: "The first element is always the smallest, so each partition peels off just one item. That's n levels of up to n work: the worst case." },
+  { t: "The sneaky inner loop", a: 4, tag: "loops",
+    c: `for (int i = 0; i < n; i++) {
+    for (int j = i + 1; j < n; j++) {
+        if (arr[i] == arr[j]) dupes++;
+    }
+}`, why: "It runs n−1, then n−2, ... then 1 times. That adds to about n²/2, and Big O drops the ½." },
+  { t: "Back-to-back loops", a: 2, tag: "loops",
+    c: `for (int i = 0; i < n; i++) {
+    total += arr[i];
+}
+for (int i = 0; i < n; i++) {
+    arr[i] -= total / n;
+}`, why: "Loops in sequence add, they don't multiply: n + n = 2n, which is still O(n)." },
+  { t: "Doubling inside a loop", a: 3, tag: "loops",
+    c: `for (int i = 0; i < n; i++) {
+    for (int j = 1; j < n; j *= 2) {
+        work++;
+    }
+}`, why: "j doubles, so the inner loop runs about log n times. Do that n times: n log n." },
+  { t: "Fixed count", a: 0, tag: "trick",
+    c: `for (int i = 0; i < 100; i++) {
+    System.out.println(arr[0]);
+}`, why: "It always runs 100 times no matter how big the array is. A constant is still O(1)." },
+  { t: "Recursive Fibonacci", a: 5, tag: "recursion",
+    c: `int fib(int n) {
+    if (n <= 1) return n;
+    return fib(n - 1) + fib(n - 2);
+}`, why: "Every call makes two more calls, so the call tree roughly doubles at each level." },
+  { t: "Selection sort", a: 4, tag: "sorting",
+    c: `for (int i = 0; i < n - 1; i++) {
+    int min = i;
+    for (int j = i + 1; j < n; j++) {
+        if (arr[j] < arr[min]) min = j;
+    }
+    swap(arr, i, min);
+}`, why: "It scans the rest of the array to find each minimum, even if the data is already sorted." },
+  { t: "Insertion sort, already sorted", a: 2, tag: "sorting",
+    c: `for (int i = 1; i < n; i++) {
+    int key = arr[i];
+    int j = i - 1;
+    while (j >= 0 && arr[j] > key) {
+        arr[j + 1] = arr[j];
+        j--;
+    }
+    arr[j + 1] = key;
+}
+// Input: {1, 2, 3, ..., n}`, why: "On sorted input the while loop stops immediately every time, so only the outer loop does work. This is insertion sort's best case." },
+  { t: "The merge step alone", a: 2, tag: "sorting",
+    c: `// left and right are each sorted
+while (i < left.length && j < right.length) {
+    if (left[i] <= right[j]) out[k++] = left[i++];
+    else out[k++] = right[j++];
+}
+// copy any leftovers...`,
+    why: "Every element is copied into out exactly once. That's why merge sort costs n per level." },
+
+  // ---------- ArrayList & String ----------
+  { t: "ArrayList get", a: 0, tag: "ArrayList",
+    c: `ArrayList<Integer> list = getScores();
+int third = list.get(2);`, why: "ArrayList is backed by an array, so get(i) jumps straight to that index." },
+  { t: "ArrayList add to the end", a: 0, tag: "ArrayList",
+    c: `list.add(42);`, why: "Adding at the end usually just fills the next open slot. Now and then the backing array has to grow, but averaged over many adds it's still O(1)." },
+  { t: "ArrayList add to the front", a: 2, tag: "ArrayList",
+    c: `list.add(0, 42);`, why: "Every existing element has to shift one spot to the right to make room." },
+  { t: "ArrayList remove(0)", a: 2, tag: "ArrayList",
+    c: `list.remove(0);`, why: "Removing the first element shifts every other element one spot left." },
+  { t: "Emptying a list from the front", a: 4, tag: "ArrayList",
+    c: `while (list.size() > 0) {
+    list.remove(0);
+}`, why: "n removals, and each one shifts up to n elements. Removing from the end with list.remove(list.size() - 1) would make this O(n)." },
+  { t: "contains() in a loop", a: 4, tag: "ArrayList",
+    c: `// a and b both have n items
+for (int i = 0; i < a.size(); i++) {
+    if (b.contains(a.get(i))) common++;
+}`, why: "contains() on an ArrayList is a linear search. An O(n) search done n times gives n²." },
+  { t: "Building a String", a: 4, tag: "String",
+    c: `String s = "";
+for (int i = 0; i < n; i++) {
+    s += "x";
+}`, why: "Strings are immutable, so every += copies the whole string into a new one: 1 + 2 + ... + n characters copied. This is why StringBuilder exists." },
+  { t: "Palindrome check", a: 2, tag: "String",
+    c: `for (int i = 0; i < s.length() / 2; i++) {
+    if (s.charAt(i) != s.charAt(s.length() - 1 - i))
+        return false;
+}
+return true;`, why: "It checks half the characters. n/2 steps is still O(n)." },
+  { t: "charAt", a: 0, tag: "String",
+    c: `char first = s.charAt(0);
+char last = s.charAt(s.length() - 1);`, why: "Like an array index: a String can jump straight to any character." },
+
+  // ---------- Arrays & 2D arrays ----------
+  { t: "Linear search", a: 2, tag: "searching",
+    c: `for (int i = 0; i < arr.length; i++) {
+    if (arr[i] == target) return i;
+}
+return -1;`, why: "Big O usually describes the worst case: the target is last or missing, so every element gets checked." },
+  { t: "Find the max", a: 2, tag: "arrays",
+    c: `int max = arr[0];
+for (int x : arr) {
+    if (x > max) max = x;
+}`, why: "Every element must be looked at once. You can't know the max without checking everything." },
+  { t: "Swap two elements", a: 0, tag: "arrays",
+    c: `int temp = arr[i];
+arr[i] = arr[j];
+arr[j] = temp;`, why: "Three assignments, no loop. Same cost for any array size." },
+  { t: "Reverse in place", a: 2, tag: "arrays",
+    c: `int lo = 0, hi = arr.length - 1;
+while (lo < hi) {
+    int temp = arr[lo];
+    arr[lo] = arr[hi];
+    arr[hi] = temp;
+    lo++;
+    hi--;
+}`, why: "The two pointers meet in the middle after n/2 swaps. Drop the ½: O(n)." },
+  { t: "Every cell of a grid", a: 4, tag: "2D arrays",
+    c: `// grid is n × n
+for (int r = 0; r < grid.length; r++) {
+    for (int c = 0; c < grid[r].length; c++) {
+        total += grid[r][c];
+    }
+}`, why: "n rows times n columns is n² cells." },
+  { t: "The diagonal", a: 2, tag: "2D arrays",
+    c: `// grid is n × n
+for (int i = 0; i < grid.length; i++) {
+    total += grid[i][i];
+}`, why: "It's a 2D array, but there's only one loop. It touches n cells, not n²." },
+
+  // ---------- Loop patterns ----------
+  { t: "Tripling", a: 1, tag: "loops",
+    c: `for (int i = 1; i < n; i *= 3) {
+    count++;
+}`, why: "Multiplying by 3 reaches n in about log₃ n steps. The base doesn't matter in Big O. It's still log n." },
+  { t: "Counting digits", a: 1, tag: "loops",
+    c: `int digits = 0;
+while (n > 0) {
+    n /= 10;
+    digits++;
+}`, why: "Dividing by 10 each time is the same idea as halving. A million has only 7 digits." },
+  { t: "Every other element", a: 2, tag: "loops",
+    c: `for (int i = 0; i < n; i += 2) {
+    total += arr[i];
+}`, why: "Adding 2 instead of 1 visits n/2 elements, which is still O(n). Only multiplying or dividing i gives log n." },
+  { t: "Doubling outside, linear inside", a: 3, tag: "loops",
+    c: `for (int i = 1; i < n; i *= 2) {
+    for (int j = 0; j < n; j++) {
+        work++;
+    }
+}`, why: "The outer loop runs log n times and each pass does n work. Loop order doesn't matter: n × log n." },
+  { t: "Comparing two arrays", a: 4, tag: "loops",
+    c: `// a and b each have n items
+for (int x : a) {
+    for (int y : b) {
+        if (x == y) matches++;
+    }
+}`, why: "Every item in a is compared with every item in b: n × n." },
+  { t: "Triangle of stars", a: 4, tag: "loops",
+    c: `for (int i = 0; i < n; i++) {
+    for (int j = 0; j < i; j++) {
+        System.out.print("*");
+    }
+    System.out.println();
+}`, why: "0 + 1 + 2 + ... + (n−1) stars is about n²/2. Drop the ½: O(n²)." },
+  { t: "Constant inner loop", a: 2, tag: "trick",
+    c: `for (int i = 0; i < n; i++) {
+    for (int j = 0; j < 5; j++) {
+        arr[i] += j;
+    }
+}`, why: "It's nested, but the inner loop always runs 5 times. 5n is O(n)." },
+  { t: "The shrinking inner loop", a: 2, tag: "trick",
+    c: `for (int i = n; i > 0; i /= 2) {
+    for (int j = 0; j < i; j++) {
+        count++;
+    }
+}`, why: "The inner loop runs n, then n/2, then n/4... That adds up to less than 2n. It looks like n log n, but it's O(n)." },
+  { t: "Return on the first pass", a: 0, tag: "trick",
+    c: `for (int i = 0; i < n; i++) {
+    return arr[i];
+}`, why: "It returns during the very first iteration. The loop never gets past i = 0." },
+
+  // ---------- Recursion ----------
+  { t: "Recursive factorial", a: 2, tag: "recursion",
+    c: `int fact(int n) {
+    if (n <= 1) return 1;
+    return n * fact(n - 1);
+}`, why: "One recursive call per level, and n drops by 1 each time: n calls total." },
+  { t: "Slow power", a: 2, tag: "recursion",
+    c: `double pow(double x, int n) {
+    if (n == 0) return 1;
+    return x * pow(x, n - 1);
+}`, why: "Same shape as factorial: one call, n shrinks by 1, so n calls." },
+  { t: "Fast power", a: 1, tag: "recursion",
+    c: `double pow(double x, int n) {
+    if (n == 0) return 1;
+    double half = pow(x, n / 2);
+    if (n % 2 == 0) return half * half;
+    return half * half * x;
+}`, why: "n is halved on each call and there's only one recursive call, so about log n calls." },
+  { t: "Recursive array sum", a: 2, tag: "recursion",
+    c: `int sum(int[] arr, int i) {
+    if (i == arr.length) return 0;
+    return arr[i] + sum(arr, i + 1);
+}`, why: "One call per index. It's a loop written as recursion." },
+  { t: "Recursive binary search", a: 1, tag: "recursion",
+    c: `int find(int[] arr, int t, int lo, int hi) {
+    if (lo > hi) return -1;
+    int mid = (lo + hi) / 2;
+    if (arr[mid] == t) return mid;
+    if (arr[mid] < t) return find(arr, t, mid + 1, hi);
+    return find(arr, t, lo, mid - 1);
+}`, why: "Only one of the two recursive calls runs each time, and it gets half the range." },
+  { t: "Halving recursion", a: 1, tag: "recursion",
+    c: `int levels(int n) {
+    if (n <= 1) return 0;
+    return 1 + levels(n / 2);
+}`, why: "One call per level, and n halves each time. This is exactly how many levels merge sort's recursion has." },
+  { t: "Two calls, same size", a: 5, tag: "recursion",
+    c: `int count(int n) {
+    if (n == 0) return 1;
+    return count(n - 1) + count(n - 1);
+}`, why: "Each call spawns two more with n − 1, so the number of calls doubles every level: 2ⁿ." },
+  { t: "Towers of Hanoi", a: 5, tag: "recursion",
+    c: `void hanoi(int n, char from, char to, char via) {
+    if (n == 0) return;
+    hanoi(n - 1, from, via, to);
+    System.out.println(from + " -> " + to);
+    hanoi(n - 1, via, to, from);
+}`, why: "Two recursive calls, each on n − 1. Moving n disks takes 2ⁿ − 1 moves." },
+
+  // ---------- Sorting & searching cases ----------
+  { t: "Merge sort, already sorted", a: 3, tag: "sorting",
+    c: `// Input: {1, 2, 3, ..., n}
+mergeSort(arr, 0, arr.length - 1);`, why: "Merge sort always splits in half and always merges everything, sorted or not. Best, average and worst are all n log n." },
+  { t: "Insertion sort, reverse order", a: 4, tag: "sorting",
+    c: `// Same insertion sort
+// Input: {n, n-1, ..., 2, 1}
+insertionSort(arr);`, why: "Every new key is smaller than everything before it, so it shifts all the way to the front: 1 + 2 + ... + n shifts." },
+  { t: "Insertion sort, random data", a: 4, tag: "sorting",
+    c: `// Same insertion sort
+// Input: shuffled values
+insertionSort(arr);`, why: "On average each key shifts about halfway back. That's still about n²/4 shifts, so O(n²)." },
+  { t: "Selection sort, already sorted", a: 4, tag: "sorting",
+    c: `// Same selection sort
+// Input: {1, 2, 3, ..., n}
+selectionSort(arr);`, why: "Selection sort can't tell the data is sorted. It still scans the rest of the array for every minimum." },
+  { t: "Quick sort, reverse order", a: 4, tag: "sorting",
+    c: `// quickSort with pivot = arr[lo]
+// Input: {n, n-1, ..., 2, 1}
+quickSort(arr, 0, arr.length - 1);`, why: "The first element is always the largest, so every partition is lopsided and one side gets everything. Worst case again." },
+  { t: "Partition alone", a: 2, tag: "sorting",
+    c: `int partition(int[] arr, int lo, int hi) {
+    int pivot = arr[hi];
+    int i = lo - 1;
+    for (int j = lo; j < hi; j++) {
+        if (arr[j] < pivot) swap(arr, ++i, j);
+    }
+    swap(arr, i + 1, hi);
+    return i + 1;
+}`, why: "One pass comparing each element to the pivot. That's the n work done at each level of quick sort." },
+  { t: "Duplicates via sorting", a: 3, tag: "sorting",
+    c: `mergeSort(arr, 0, n - 1);
+for (int i = 0; i < n - 1; i++) {
+    if (arr[i] == arr[i + 1]) return true;
+}
+return false;`, why: "Sorting costs n log n, then one O(n) pass. The biggest term wins: n log n. That beats the O(n²) every-pair version." },
+  { t: "Sort, then search a lot", a: 3, tag: "searching",
+    c: `mergeSort(arr, 0, n - 1);          // n log n
+for (int i = 0; i < n; i++) {
+    binarySearch(arr, queries[i]);   // log n each
+}`, why: "n log n to sort, plus n searches at log n each. n log n + n log n is still O(n log n)." }
+];
+
+const SPEED_SECS = 20;
+let roundLen = 10;
+let state = { mode: null, deck: [], i: 0, score: 0, streak: 0, best: 0, log: [], answered: false, timer: null, left: 0 };
+const app = document.getElementById("app");
+
+function esc(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+function hl(code) {
+  return esc(code).replace(/(\/\/.*$)|\b(int|for|while|if|else|return|void|new|double|boolean)\b|\b(\d+)\b/gm,
+    (m, cm, kw, nm) => cm ? `<span class="cm">${cm}</span>` : kw ? `<span class="kw">${kw}</span>` : `<span class="nm">${nm}</span>`);
+}
+function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function setStats() { sScore.textContent = state.score; sStreak.textContent = state.streak; }
+
+function startScreen() {
+  clearInterval(state.timer);
+  app.innerHTML = `
+  <section class="card start">
+    <p class="qtitle">${Q.length} code snippets. Six runtimes. How fast can you read them?</p>
+    <p>Each card shows a piece of Java. Pick its Big O. After you answer, you'll see how long every runtime would take on a million items, so you can feel the difference between O(n log n) and O(n²).</p>
+    <div class="ladder" aria-label="Runtimes from fastest to slowest"><span>fastest</span>${OPTS.map(o => `<code>${o}</code>`).join("<span>→</span>")}<span>slowest</span></div>
+    <div class="lens" role="group" aria-label="Questions per round"><span>Questions per round</span>${[10, 20, Q.length].map(n => `<button class="len" data-n="${n}" aria-pressed="${n === roundLen}">${n === Q.length ? "All " + n : n}</button>`).join("")}</div>
+    <div class="modes">
+      <button class="mode" id="mPractice"><b>Practice</b><small>No clock. 10 points per correct answer.</small></button>
+      <button class="mode" id="mSpeed"><b>Speed round</b><small>${SPEED_SECS} seconds each. Faster answers earn bonus points.</small></button>
+    </div>
+  </section>`;
+  mPractice.onclick = () => begin("practice");
+  mSpeed.onclick = () => begin("speed");
+  app.querySelectorAll(".len").forEach(b => b.onclick = () => {
+    roundLen = +b.dataset.n;
+    app.querySelectorAll(".len").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+  });
+}
+
+function begin(mode) {
+  state = { ...state, mode, deck: shuffle(Q).slice(0, roundLen), i: 0, score: 0, streak: 0, best: 0, log: [] };
+  setStats(); show();
+}
+
+function show() {
+  clearInterval(state.timer);
+  state.answered = false;
+  const q = state.deck[state.i];
+  app.innerHTML = `
+  <section class="card">
+    <div class="qhead">
+      <div><div class="qnum">Question ${state.i + 1} of ${state.deck.length}</div><p class="qtitle">${q.t}</p></div>
+      <span class="tag">${q.tag}</span>
+    </div>
+    ${state.mode === "speed" ? `<div class="timer"><i id="bar"></i></div>` : ""}
+    <pre><code>${hl(q.c)}</code></pre>
+    <div class="choices">${OPTS.map((o, k) => `<button class="choice" data-k="${k}"><kbd>${k + 1}</kbd>${o}</button>`).join("")}</div>
+    <div id="reveal"></div>
+  </section>`;
+  app.querySelectorAll(".choice").forEach(b => b.onclick = () => answer(+b.dataset.k));
+  if (state.mode === "speed") {
+    state.left = SPEED_SECS * 10;
+    state.timer = setInterval(() => {
+      state.left--; const bar = document.getElementById("bar");
+      if (bar) bar.style.width = (state.left / (SPEED_SECS * 10) * 100) + "%";
+      if (state.left <= 0) answer(-1);
+    }, 100);
+  }
+}
+
+function answer(k) {
+  if (state.answered) return;
+  state.answered = true; clearInterval(state.timer);
+  const q = state.deck[state.i], ok = k === q.a;
+  let pts = 0;
+  if (ok) {
+    state.streak++; state.best = Math.max(state.best, state.streak);
+    pts = 10 + (state.mode === "speed" ? Math.ceil(state.left / 20) : 0) + (state.streak >= 3 ? 5 : 0);
+    state.score += pts;
+  } else state.streak = 0;
+  state.log.push({ t: q.t, ok, pick: k, a: q.a });
+  setStats();
+
+  app.querySelectorAll(".choice").forEach(b => {
+    const kk = +b.dataset.k; b.disabled = true;
+    if (kk === q.a) b.classList.add("right"); else if (kk === k) b.classList.add("wrong");
+  });
+  const head = ok ? `Correct, ${OPTS[q.a]}. +${pts}${state.streak >= 3 ? " (streak bonus)" : ""}`
+             : k === -1 ? `Time's up. It's ${OPTS[q.a]}.` : `Not quite. It's ${OPTS[q.a]}.`;
+  const last = state.i === state.deck.length - 1;
+  document.getElementById("reveal").innerHTML = `
+  <div class="reveal">
+    <p class="verdict ${ok ? "ok" : "no"}">${head}</p>
+    <p class="why">${q.why}</p>
+    <div class="race">
+      <h3>Time to finish with n = 1,000,000 at a billion steps per second</h3>
+      ${OPTS.map((o, j) => `<div class="lane ${j === q.a ? "hit" : (j === k ? "miss" : "")}"><code>${o}</code><div class="bar"><i style="width:${RACE[j].w}%"></i></div><span>${RACE[j].t}</span></div>`).join("")}
+    </div>
+    <div class="row"><button class="btn primary" id="next">${last ? "See results" : "Next question"}</button></div>
+  </div>`;
+  const nx = document.getElementById("next"); nx.focus(); nx.onclick = next;
+}
+
+function next() { if (state.i < state.deck.length - 1) { state.i++; show(); } else results(); }
+
+function results() {
+  const right = state.log.filter(l => l.ok).length;
+  const total = state.deck.length, pct = right / total;
+  const msg = right === total ? "Perfect run. You read Big O like a compiler."
+    : pct >= 0.8 ? "Strong. Check the misses below and run it again."
+    : pct >= 0.5 ? "Getting there. Look for the loop patterns in the ones you missed."
+    : "Start with the patterns: one loop is n, nested is n², halving is log n.";
+  app.innerHTML = `
+  <section class="card">
+    <div class="qnum">Round complete · ${state.mode === "speed" ? "Speed round" : "Practice"}</div>
+    <p class="big">${right}/${total}</p>
+    <p class="why">${msg} Score <b>${state.score}</b>, best streak <b>${state.best}</b>.</p>
+    <div class="review">${state.log.map(l => `<div class="ritem ${l.ok ? "ok" : "no"}"><span class="mark">${l.ok ? "✓" : "✗"}</span><span>${l.t}</span><code>${l.ok ? OPTS[l.a] : (l.pick < 0 ? "no answer" : OPTS[l.pick]) + " → " + OPTS[l.a]}</code></div>`).join("")}</div>
+    <div class="row">
+      <button class="btn ghost" id="menu">Change mode</button>
+      <button class="btn primary" id="again">Play again</button>
+    </div>
+  </section>`;
+  menu.onclick = () => { state.score = 0; state.streak = 0; setStats(); startScreen(); };
+  again.onclick = () => begin(state.mode);
+}
+
+document.addEventListener("keydown", e => {
+  const q = app.querySelector(".choice:not(:disabled)");
+  if (q && e.key >= "1" && e.key <= "6") answer(+e.key - 1);
+  else if (e.key === "Enter" && state.answered && document.activeElement?.id !== "next") { const n = document.getElementById("next"); if (n) n.click(); }
+});
+
+startScreen();
+</script>
+
+</body></html>
